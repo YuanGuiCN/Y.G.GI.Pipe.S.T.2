@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>钢管重量计算器 · 紫蓝优化版</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ========== CSS 变量 · 紫蓝色系 ========== */
+        :root {
+            --primary-bg: #0b0d1a;
+            --secondary-bg: #14162e;
+            --card-bg: #1a1c3a;
+            --purple: #a855f7;
+            --purple-light: #c084fc;
+            --purple-dark: #7e22ce;
+            --blue: #3b82f6;
+            --blue-light: #60a5fa;
+            --blue-dark: #1d4ed8;
+            --accent-gradient: linear-gradient(135deg, var(--purple), var(--blue));
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --border-color: #333366;
+            --radius: 12px;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        /* ===== 重置 & 基础 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Inter', -apple-system, system-ui, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            padding: 8px 10px calc(10px + var(--safe-bottom));
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            line-height: 1.4;
+            min-height: 100vh;
+            min-height: 100dvh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior: none;
+            touch-action: manipulation;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: transparent;
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        /* ===== 头部 ===== */
+        header {
+            text-align: center;
+            padding: 14px 12px 10px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.2px;
+        }
+        h1 i {
+            -webkit-text-fill-color: transparent;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            margin-right: 4px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            font-weight: 400;
+        }
+        .intj-badge {
+            display: inline-block;
+            background: var(--accent-gradient);
+            color: #fff;
+            padding: 1px 10px;
+            border-radius: 20px;
+            font-size: 0.55rem;
+            font-weight: 600;
+            margin-left: 4px;
+            vertical-align: middle;
+            -webkit-text-fill-color: #fff;
+            border: none;
+        }
+
+        /* ===== 自动计算开关 ===== */
+        .auto-calculation {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            flex-wrap: wrap;
+        }
+        .auto-calculation input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--purple);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .auto-calculation label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .auto-calculation .hint {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            opacity: 0.6;
+            margin-left: auto;
+        }
+
+        /* ===== 卡片 ===== */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 12px 10px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            transition: border-color 0.2s;
+        }
+        .card:hover {
+            border-color: var(--purple);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid transparent;
+            border-image: var(--accent-gradient);
+            border-image-slice: 1;
+            gap: 8px;
+        }
+        .card-header h2 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .card-header .icon {
+            flex-shrink: 0;
+            color: var(--purple-light);
+            width: 16px;
+            height: 16px;
+        }
+
+        /* ===== 紧凑布局：标签行 + 输入行 ===== */
+        .param-group {
+            margin-bottom: 8px;
+        }
+        .param-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .label-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 3px;
+            padding: 0 2px;
+        }
+        .label-row .label-item {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--purple-light);
+            flex: 1;
+            text-align: center;
+            letter-spacing: 0.3px;
+        }
+        .label-row .label-item i {
+            margin-right: 2px;
+            font-size: 0.6rem;
+        }
+        .label-row .label-item .unit-hint {
+            font-weight: 400;
+            color: var(--text-secondary);
+            font-size: 0.6rem;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 6px;
+        }
+        .input-row .input-item {
+            flex: 1;
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            min-width: 0;
+        }
+        .input-row .input-item input {
+            flex: 1;
+            min-width: 0;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px 0 0 6px;
+            border-right: none;
+            background: var(--secondary-bg);
+            color: var(--text-primary);
+            font-size: 16px !important;
+            outline: none;
+            min-height: 36px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+        }
+        .input-row .input-item input:focus {
+            border-color: var(--purple);
+            box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.12);
+        }
+        .input-row .input-item select {
+            flex-shrink: 0;
+            width: 56px;
+            padding: 6px 4px 6px 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 0 6px 6px 0;
+            background: var(--secondary-bg);
+            color: var(--text-primary);
+            font-size: 14px !important;
+            outline: none;
+            min-height: 36px;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%2394a3b8'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 6px center;
+            padding-right: 18px;
+            cursor: pointer;
+            touch-action: manipulation;
+            border-left: none;
+        }
+        .input-row .input-item select:focus {
+            border-color: var(--purple);
+            outline: none;
+        }
+
+        /* 选择器单独行（钢管类型 + 规格选择） */
+        .selector-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .selector-row .selector-item {
+            flex: 1;
+            min-width: 120px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .selector-row .selector-item label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--purple-light);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .selector-row .selector-item select {
+            flex: 1;
+            padding: 6px 20px 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--secondary-bg);
+            color: var(--text-primary);
+            font-size: 16px !important;
+            outline: none;
+            min-height: 36px;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%2394a3b8'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            padding-right: 22px;
+            cursor: pointer;
+            touch-action: manipulation;
+            width: 100%;
+        }
+        .selector-row .selector-item select:focus {
+            border-color: var(--purple);
+            box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.12);
+        }
+        .selector-row .selector-item select option {
+            background: var(--secondary-bg);
+            color: var(--text-primary);
+        }
+
+        /* ===== 单位信息条 ===== */
+        .unit-info {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            background: rgba(168, 85, 247, 0.04);
+            border-radius: 6px;
+            margin: 6px 0 8px;
+            border: 1px solid rgba(168, 85, 247, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .unit-info i {
+            color: var(--purple-light);
+            font-size: 0.6rem;
+        }
+
+        /* ===== 计算按钮 ===== */
+        .calculate-btn {
+            background: var(--accent-gradient);
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 42px;
+            box-shadow: 0 2px 12px rgba(168, 85, 247, 0.12);
+            touch-action: manipulation;
+            user-select: none;
+            will-change: transform;
+            margin-top: 4px;
+        }
+        .calculate-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* ===== 结果区域 ===== */
+        .result-container {
+            background: var(--secondary-bg);
+            border-radius: 10px;
+            padding: 14px 14px;
+            margin-top: 12px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: border-color 0.2s;
+        }
+        .result-container:hover {
+            border-color: var(--purple);
+        }
+
+        .result-title {
+            font-size: 0.8rem;
+            color: var(--purple-light);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .result-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+            transition: all 0.3s ease;
+            will-change: transform;
+        }
+        .result-value.updated {
+            animation: gentlePulse 0.5s ease;
+        }
+        @keyframes gentlePulse {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.04); }
+            100% { transform: scale(1); }
+        }
+
+        .result-unit {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-left: 2px;
+            font-weight: 500;
+        }
+
+        #result-details {
+            margin-top: 4px;
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            line-height: 1.4;
+        }
+
+        /* ===== 说明区域 ===== */
+        .note {
+            background: rgba(168, 85, 247, 0.03);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-top: 10px;
+            border: 1px solid rgba(168, 85, 247, 0.05);
+        }
+        .note h3 {
+            color: var(--purple-light);
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .note ul {
+            padding-left: 16px;
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .note ul li {
+            margin-bottom: 1px;
+        }
+        .note ul li strong {
+            color: var(--text-primary);
+        }
+
+        /* ===== 页脚 ===== */
+        footer {
+            text-align: center;
+            padding: 10px;
+            color: var(--text-secondary);
+            font-size: 0.6rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 10px;
+        }
+
+        /* ===== 响应式 ===== */
+        @media screen and (max-width: 480px) {
+            body {
+                padding: 4px 6px calc(6px + var(--safe-bottom));
+            }
+            .card {
+                padding: 8px 6px;
+                border-radius: 10px;
+            }
+            .card-header h2 {
+                font-size: 0.85rem;
+            }
+            .card-header {
+                margin-bottom: 6px;
+                padding-bottom: 4px;
+            }
+            .input-row .input-item input {
+                min-height: 32px;
+                padding: 4px 6px;
+                font-size: 16px !important;
+            }
+            .input-row .input-item select {
+                min-height: 32px;
+                padding: 4px 4px 4px 6px;
+                font-size: 14px !important;
+                width: 48px;
+            }
+            .selector-row .selector-item select {
+                min-height: 32px;
+                padding: 4px 18px 4px 6px;
+                font-size: 16px !important;
+            }
+            .label-row .label-item {
+                font-size: 0.6rem;
+            }
+            .result-value {
+                font-size: 1.8rem;
+            }
+            .calculate-btn {
+                min-height: 38px;
+                font-size: 0.85rem;
+                padding: 8px 12px;
+            }
+            .auto-calculation {
+                padding: 6px 10px;
+            }
+            .auto-calculation label {
+                font-size: 0.7rem;
+            }
+            .auto-calculation .hint {
+                font-size: 0.55rem;
+            }
+            .unit-info {
+                font-size: 0.55rem;
+                padding: 3px 8px;
+                margin: 4px 0 6px;
+            }
+            h1 {
+                font-size: 1.1rem;
+            }
+            .subtitle {
+                font-size: 0.6rem;
+            }
+            .intj-badge {
+                font-size: 0.5rem;
+                padding: 1px 8px;
+            }
+            .selector-row .selector-item label {
+                font-size: 0.6rem;
+            }
+            #result-details {
+                font-size: 0.6rem;
+            }
+            .note {
+                padding: 6px 10px;
+                margin-top: 6px;
+            }
+            .note h3 {
+                font-size: 0.65rem;
+            }
+            .note ul {
+                font-size: 0.55rem;
+                padding-left: 14px;
+            }
+            .result-container {
+                padding: 10px 10px;
+                margin-top: 8px;
+            }
+            .result-title {
+                font-size: 0.7rem;
+            }
+            .result-unit {
+                font-size: 0.8rem;
+            }
+            .param-group {
+                margin-bottom: 4px;
+            }
+            .label-row {
+                margin-bottom: 2px;
+            }
+            .input-row {
+                gap: 4px;
+            }
+            .selector-row {
+                gap: 4px;
+            }
+            .selector-row .selector-item {
+                min-width: 80px;
+            }
+        }
+
+        /* iPhone 15 Pro 特定微调 (393px 宽度) */
+        @media screen and (width: 393px) {
+            .result-value {
+                font-size: 1.9rem !important;
+            }
+            .input-row .input-item select {
+                width: 50px !important;
+            }
+        }
+
+        /* ===== 安全区域 ===== */
+        @supports (padding: max(0px)) {
+            body {
+                padding-left: max(6px, env(safe-area-inset-left));
+                padding-right: max(6px, env(safe-area-inset-right));
+                padding-bottom: max(6px, env(safe-area-inset-bottom));
+            }
+        }
+
+        /* ===== 滚动条 ===== */
+        ::-webkit-scrollbar {
+            width: 3px;
+            height: 3px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--secondary-bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-gradient);
+            border-radius: 3px;
+        }
+
+        /* ===== 打印 ===== */
+        @media print {
+            body {
+                background: #fff;
+                color: #000;
+                padding: 20px;
+            }
+            .card {
+                background: #f5f5f5;
+                border-color: #ccc;
+            }
+            .result-value {
+                background: none !important;
+                -webkit-text-fill-color: #4f46e5 !important;
+                color: #4f46e5 !important;
+            }
+            .calculate-btn,
+            .auto-calculation {
+                display: none !important;
+            }
+        }
+
+        /* ===== 去除number箭头 ===== */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
+        /* ===== placeholder 颜色 ===== */
+        ::-webkit-input-placeholder {
+            color: rgba(148, 163, 184, 0.3);
+            opacity: 1;
+        }
+        ::-moz-placeholder {
+            color: rgba(148, 163, 184, 0.3);
+            opacity: 1;
+        }
+        :-ms-input-placeholder {
+            color: rgba(148, 163, 184, 0.3);
+            opacity: 1;
+        }
+        ::placeholder {
+            color: rgba(148, 163, 184, 0.3);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1><i class="fas fa-weight-hanging"></i> 钢管重量计算器</h1>
+        <p class="subtitle">精确计算各种钢管的重量，多单位输入 <span class="intj-badge">紫蓝·紧凑</span></p>
+    </header>
+
+    <div class="auto-calculation">
+        <input type="checkbox" id="auto-calculate" checked>
+        <label for="auto-calculate"><i class="fas fa-sync-alt"></i> 自动计算</label>
+        <span class="hint">输入即更新</span>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="2.18" />
+                <path d="M7 2v20" />
+                <path d="M17 2v20" />
+                <path d="M2 12h20" />
+            </svg>
+            <h2>参数输入</h2>
+        </div>
+
+        <!-- 钢管类型 + 规格选择 -->
+        <div class="param-group">
+            <div class="selector-row">
+                <div class="selector-item">
+                    <label for="pipe-type"><i class="fas fa-tag"></i> 类型</label>
+                    <select id="pipe-type">
+                        <option value="hot-galvanized">热镀锌水管</option>
+                        <option value="cold-galvanized">冷镀锌水管</option>
+                        <option value="black-pipe">黑管</option>
+                        <option value="seamless">无缝钢管</option>
+                    </select>
+                </div>
+                <div class="selector-item">
+                    <label for="size-inch"><i class="fas fa-ruler"></i> 规格</label>
+                    <select id="size-inch">
+                        <option value="">-- 选择 --</option>
+                        <option value="1/2">1/2 寸 (DN15)</option>
+                        <option value="3/4">3/4 寸 (DN20)</option>
+                        <option value="1" selected>1 寸 (DN25)</option>
+                        <option value="1.2">1.2 寸 (DN32)</option>
+                        <option value="1.5">1.5 寸 (DN40)</option>
+                        <option value="2">2 寸 (DN50)</option>
+                        <option value="2.5">2.5 寸 (DN65)</option>
+                        <option value="3">3 寸 (DN80)</option>
+                        <option value="4">4 寸 (DN100)</option>
+                        <option value="5">5 寸 (DN125)</option>
+                        <option value="6">6 寸 (DN150)</option>
+                        <option value="8">8 寸 (DN200)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 外径 + 壁厚 -->
+        <div class="param-group">
+            <div class="label-row">
+                <span class="label-item"><i class="fas fa-circle"></i> 外径</span>
+                <span class="label-item"><i class="fas fa-arrows-alt-h"></i> 壁厚</span>
+            </div>
+            <div class="input-row">
+                <div class="input-item">
+                    <input type="number" id="outer-diameter" min="1" step="0.1" placeholder="外径" inputmode="decimal">
+                    <select id="outer-diameter-unit">
+                        <option value="mm" selected>mm</option>
+                        <option value="cm">cm</option>
+                        <option value="m">m</option>
+                        <option value="inch">in</option>
+                    </select>
+                </div>
+                <div class="input-item">
+                    <input type="number" id="wall-thickness" min="0.1" step="0.1" placeholder="壁厚" inputmode="decimal">
+                    <select id="wall-thickness-unit">
+                        <option value="mm" selected>mm</option>
+                        <option value="cm">cm</option>
+                        <option value="m">m</option>
+                        <option value="inch">in</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 长度 + 重量单位 -->
+        <div class="param-group">
+            <div class="label-row">
+                <span class="label-item"><i class="fas fa-arrows-alt-v"></i> 长度</span>
+                <span class="label-item"><i class="fas fa-weight"></i> 重量单位</span>
+            </div>
+            <div class="input-row">
+                <div class="input-item">
+                    <input type="number" id="length" min="0.1" step="0.1" value="6" inputmode="decimal">
+                    <select id="length-unit">
+                        <option value="m" selected>m</option>
+                        <option value="cm">cm</option>
+                        <option value="mm">mm</option>
+                        <option value="ft">ft</option>
+                    </select>
+                </div>
+                <div class="input-item" style="flex:0.8;">
+                    <select id="weight-unit" style="border-radius:6px; border:1px solid var(--border-color); width:100%; padding:6px 8px; background:var(--secondary-bg); color:var(--text-primary); font-size:16px; min-height:36px; -webkit-appearance:none; appearance:none; background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'8\' height=\'5\'%3E%3Cpath d=\'M0 0l4 5 4-5z\' fill=\'%2394a3b8\'/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 8px center; padding-right:22px; cursor:pointer;">
+                        <option value="kg" selected>千克</option>
+                        <option value="g">克</option>
+                        <option value="ton">吨</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="unit-info">
+            <i class="fas fa-info-circle"></i> 所有输入值自动换算为标准单位（毫米和米）计算
+        </div>
+
+        <button class="calculate-btn" id="calculate">
+            <i class="fas fa-calculator"></i> 计算重量
+        </button>
+
+        <!-- 结果 -->
+        <div class="result-container">
+            <div class="result-title">理论重量</div>
+            <div>
+                <span class="result-value" id="result">0.00</span>
+                <span class="result-unit" id="result-unit">千克</span>
+            </div>
+            <div id="result-details"></div>
+        </div>
+
+        <div class="note">
+            <h3><i class="fas fa-info-circle"></i> 计算说明</h3>
+            <ul>
+                <li><strong>公式</strong>：重量 = (外径 - 壁厚) × 壁厚 × 0.02466 × 长度</li>
+                <li><strong>热镀锌</strong>：重量增加 5%</li>
+                <li><strong>冷镀锌</strong>：重量增加 3%</li>
+                <li>黑管 / 无缝管 直接计算</li>
+            </ul>
+        </div>
+    </div>
+
+    <footer>© 2026 钢管重量计算器 · 紫蓝优化版</footer>
+</div>
+
+<script>
+    // ===== 钢管规格数据库 =====
+    const pipeSpecs = {
+        '1/2': { outerDiameter: 21.3, wallThickness: 2.8 },
+        '3/4': { outerDiameter: 26.9, wallThickness: 2.8 },
+        '1': { outerDiameter: 33.7, wallThickness: 3.2 },
+        '1.2': { outerDiameter: 42.4, wallThickness: 3.5 },
+        '1.5': { outerDiameter: 48.3, wallThickness: 3.5 },
+        '2': { outerDiameter: 60.3, wallThickness: 3.8 },
+        '2.5': { outerDiameter: 76.1, wallThickness: 4.0 },
+        '3': { outerDiameter: 88.9, wallThickness: 4.0 },
+        '4': { outerDiameter: 114.3, wallThickness: 4.0 },
+        '5': { outerDiameter: 139.7, wallThickness: 4.0 },
+        '6': { outerDiameter: 168.3, wallThickness: 4.5 },
+        '8': { outerDiameter: 219.1, wallThickness: 6.0 }
+    };
+
+    // ===== 单位转换系数 =====
+    const lengthConversion = {
+        'mm': 0.001,
+        'cm': 0.01,
+        'm': 1,
+        'inch': 0.0254,
+        'ft': 0.3048
+    };
+
+    const weightConversion = {
+        'kg': 0.001,
+        'g': 0.000001,
+        'ton': 1000
+    };
+
+    // ===== DOM 引用 =====
+    const pipeType = document.getElementById('pipe-type');
+    const sizeInch = document.getElementById('size-inch');
+    const outerDiameter = document.getElementById('outer-diameter');
+    const outerDiameterUnit = document.getElementById('outer-diameter-unit');
+    const wallThickness = document.getElementById('wall-thickness');
+    const wallThicknessUnit = document.getElementById('wall-thickness-unit');
+    const lengthInput = document.getElementById('length');
+    const lengthUnit = document.getElementById('length-unit');
+    const weightUnit = document.getElementById('weight-unit');
+    const autoCalc = document.getElementById('auto-calculate');
+    const resultEl = document.getElementById('result');
+    const resultUnitEl = document.getElementById('result-unit');
+    const resultDetails = document.getElementById('result-details');
+
+    // ===== 工具函数 =====
+    function toMeters(value, unit) {
+        return value * lengthConversion[unit];
+    }
+
+    function animateResult(el) {
+        el.classList.remove('updated');
+        void el.offsetWidth;
+        el.classList.add('updated');
+    }
+
+    // ===== 核心计算 =====
+    function calculateWeight() {
+        const type = pipeType.value;
+        const od = parseFloat(outerDiameter.value);
+        const odUnit = outerDiameterUnit.value;
+        const wt = parseFloat(wallThickness.value);
+        const wtUnit = wallThicknessUnit.value;
+        const len = parseFloat(lengthInput.value);
+        const lenUnit = lengthUnit.value;
+        const wUnit = weightUnit.value;
+
+        if (isNaN(od) || isNaN(wt) || isNaN(len) || od <= 0 || wt <= 0 || len <= 0 || wt >= od/2) {
+            resultEl.textContent = "0.00";
+            resultDetails.textContent = "请输入有效的数值";
+            return;
+        }
+
+        // 转换为标准单位
+        const odMm = toMeters(od, odUnit) * 1000;
+        const wtMm = toMeters(wt, wtUnit) * 1000;
+        const lenM = toMeters(len, lenUnit);
+
+        // 基本重量 (kg)
+        let baseWeight = (odMm - wtMm) * wtMm * 0.02466 * lenM / 1000;
+
+        // 镀锌加成
+        let adjustmentText = '';
+        switch (type) {
+            case 'hot-galvanized':
+                baseWeight *= 1.05;
+                adjustmentText = '（包含5%镀锌层）';
+                break;
+            case 'cold-galvanized':
+                baseWeight *= 1.03;
+                adjustmentText = '（包含3%镀锌层）';
+                break;
+            default:
+                adjustmentText = '';
+        }
+
+        // 转换到目标单位
+        const displayWeight = baseWeight / weightConversion[wUnit];
+
+        // 显示结果
+        resultEl.textContent = displayWeight.toFixed(3);
+        const unitLabels = { 'kg': '千克', 'g': '克', 'ton': '吨' };
+        resultUnitEl.textContent = unitLabels[wUnit] || '千克';
+        animateResult(resultEl);
+
+        // 详情
+        const typeNames = {
+            'hot-galvanized': '热镀锌水管',
+            'cold-galvanized': '冷镀锌水管',
+            'black-pipe': '黑管',
+            'seamless': '无缝钢管'
+        };
+        resultDetails.innerHTML = `${typeNames[type]}，外径 ${odMm.toFixed(1)}mm，壁厚 ${wtMm.toFixed(1)}mm，长度 ${lenM.toFixed(2)}m ${adjustmentText}`;
+    }
+
+    // ===== 事件绑定 =====
+    // 规格选择
+    sizeInch.addEventListener('change', function() {
+        const val = this.value;
+        if (val && pipeSpecs[val]) {
+            const spec = pipeSpecs[val];
+            outerDiameter.value = spec.outerDiameter;
+            wallThickness.value = spec.wallThickness;
+            if (autoCalc.checked) calculateWeight();
+        }
+    });
+
+    // 自动计算监听
+    const inputs = document.querySelectorAll('input, select');
+    inputs.forEach(el => {
+        el.addEventListener('input', function() {
+            if (autoCalc.checked) calculateWeight();
+        });
+        el.addEventListener('change', function() {
+            if (autoCalc.checked) calculateWeight();
+        });
+    });
+
+    // 手动计算按钮
+    document.getElementById('calculate').addEventListener('click', calculateWeight);
+
+    // 初始化计算
+    window.addEventListener('DOMContentLoaded', function() {
+        // 默认选中1寸规格，触发填充
+        sizeInch.value = '1';
+        sizeInch.dispatchEvent(new Event('change'));
+        // 确保计算
+        calculateWeight();
+    });
+</script>
+</body>
+</html>
